@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# uv
+.uv/
+uv.lock
+
+# Extraction temp data
+uploads/
+extracted_book.json
+*.json
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# Testing
+.pytest_cache/
+.ruff_cache/
+coverage.xml
+.coverage
+htmlcov/

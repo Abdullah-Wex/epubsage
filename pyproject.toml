@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "epubsage"
+version = "0.1.0"
+description = "A professional EPUB structure and content extraction library with Dublin Core metadata support."
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Abdullah Wex", email = "alshreef15xm@gmail.com"}
+]
+keywords = ["epub", "ebook", "parser", "metadata", "dublin-core", "extraction", "reading"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+    "pydantic>=2.0.0",
+    "lxml>=5.0.0",
+]
+
+[project.scripts]
+epub-sage = "epub_sage.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/abdullahwex/epubsage"
+Repository = "https://github.com/abdullahwex/epubsage"
+Documentation = "https://github.com/abdullahwex/epubsage#readme"
+Issues = "https://github.com/abdullahwex/epubsage/issues"
+Changelog = "https://github.com/abdullahwex/epubsage/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.3.0",
+    "mypy>=1.0.0",
+]
