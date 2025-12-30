@@ -15,7 +15,14 @@ def discover_content_opf_files():
     """Discover all content.opf files in uploads directory."""
     base_dir = Path(__file__).parent.parent.parent
     pattern = str(base_dir / "uploads" / "**" / "content.opf")
-    return glob.glob(pattern, recursive=True)
+    files = glob.glob(pattern, recursive=True)
+    # Return placeholder if no files found (for CI environments)
+    return files if files else []
+
+
+# Get files at module level, but handle empty case
+_CONTENT_OPF_FILES = discover_content_opf_files()
+_HAS_TEST_FILES = len(_CONTENT_OPF_FILES) > 0
 
 
 class TestContentOpfIntegration:
@@ -34,9 +41,12 @@ class TestContentOpfIntegration:
             pytest.skip("No content.opf files found in uploads directory")
         return files
 
-    @pytest.mark.parametrize("file_path", discover_content_opf_files())
+    @pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
+    @pytest.mark.parametrize("file_path", _CONTENT_OPF_FILES or ["placeholder"])
     def test_parse_content_opf_file_successfully(self, service, file_path):
         """Test that each content.opf file parses without errors."""
+        if file_path == "placeholder":
+            pytest.skip("No test files available")
         result = service.parse_content_opf(file_path)
 
         # Basic structure validation
@@ -49,6 +59,7 @@ class TestContentOpfIntegration:
         assert len(
             result.metadata.identifiers) > 0, f"No identifiers found in {file_path}"
 
+    @pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
     def test_service_methods_work(self, service, content_opf_files):
         """Test that service methods return expected data types."""
         test_file = content_opf_files[0]
@@ -65,6 +76,7 @@ class TestContentOpfIntegration:
         assert 'is_valid' in validation
         assert 'quality_score' in validation
 
+    @pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
     def test_convenience_function_works(self, content_opf_files):
         """Test the convenience parse function."""
         test_file = content_opf_files[0]
@@ -73,6 +85,7 @@ class TestContentOpfIntegration:
         assert isinstance(result, ParsedContentOpf)
         assert result.metadata.title is not None
 
+    @pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
     def test_core_metadata_extraction(self, service, content_opf_files):
         """Test that core metadata fields are extracted correctly."""
         for file_path in content_opf_files[:3]:  # Test first 3 files
@@ -88,6 +101,7 @@ class TestContentOpfIntegration:
             assert len(
                 result.manifest_items) > 0, f"No manifest items in {file_path}"
 
+    @pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
     def test_epub_version_detection(self, service, content_opf_files):
         """Test that EPUB version is detected correctly."""
         for file_path in content_opf_files:
@@ -98,6 +112,7 @@ class TestContentOpfIntegration:
             assert metadata.epub_version in [
                 "2.0", "3.0"], f"Invalid EPUB version in {file_path}"
 
+    @pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
     def test_no_parsing_errors_on_valid_files(
             self, service, content_opf_files):
         """Test that valid files don't generate parsing errors."""

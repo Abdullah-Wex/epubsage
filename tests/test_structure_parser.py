@@ -12,7 +12,12 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Check if test files exist (for CI environments)
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+_HAS_TEST_FILES = len(list(_PROJECT_ROOT.glob("uploads/**/content.opf"))) > 0
 
+
+@pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
 class TestStructureParser:
     """Test EPUB structure parsing with real files."""
 

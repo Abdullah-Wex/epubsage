@@ -9,7 +9,35 @@ from epub_sage import DublinCoreParser
 from epub_sage import DublinCoreMetadata, ParsedContentOpf
 from epub_sage import DublinCoreService, parse_content_opf
 
+# Check if test files exist (for CI environments)
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+_HAS_TEST_FILES = len(list(_PROJECT_ROOT.glob("uploads/**/content.opf"))) > 0
 
+
+class TestDublinCoreParserUnit:
+    """Unit tests for parser that don't require external files."""
+
+    @pytest.fixture
+    def parser(self):
+        return DublinCoreParser()
+
+    @pytest.fixture
+    def service(self):
+        return DublinCoreService()
+
+    def test_parser_initialization(self, parser):
+        """Test parser initializes correctly."""
+        assert parser is not None
+        assert parser.namespaces == {}
+        assert parser.parsing_errors == []
+
+    def test_service_initialization(self, service):
+        """Test service initializes correctly."""
+        assert service is not None
+        assert service.parser is not None
+
+
+@pytest.mark.skipif(not _HAS_TEST_FILES, reason="No test files in uploads directory")
 class TestDublinCoreParserWithRealFiles:
     """Test parser with actual content.opf files from uploads directory."""
 
@@ -32,17 +60,6 @@ class TestDublinCoreParserWithRealFiles:
             sample_files.append(opf_file)
 
         return sample_files
-
-    def test_parser_initialization(self, parser):
-        """Test parser initializes correctly."""
-        assert parser is not None
-        assert parser.namespaces == {}
-        assert parser.parsing_errors == []
-
-    def test_service_initialization(self, service):
-        """Test service initializes correctly."""
-        assert service is not None
-        assert service.parser is not None
 
     @pytest.mark.parametrize("sample_file", [
         "/Users/abdullahwex/Desktop/MyFiles/Projects/Sage Reader/uploads/8a14dea195908257/raw/OEBPS/content.opf",
