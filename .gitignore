@@ -30,7 +30,6 @@ ENV/
 
 # uv
 .uv/
-uv.lock
 
 # Extraction temp data
 uploads/
