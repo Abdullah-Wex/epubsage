@@ -301,7 +301,7 @@ def parse_content_opf(file_path: str):
     service = DublinCoreService()
     return service.parse_content_opf(file_path)
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 # --- Public API Groupings ---
 
