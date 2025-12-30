@@ -92,7 +92,9 @@ save_to_json(output, "book_data.json")
 | `quick_extract(path)` | Extract EPUB to a directory. Returns path string. |
 | `get_epub_info(path)` | Get file info without extraction. Returns dict. |
 | `save_to_json(data, path)` | Save data to JSON with datetime support. |
-| `parse_content_opf(path)` | Parse `content.opf` directly. Returns `ParsedContentOpf`. |
+| `parse_content_opf(path)` | Parse `.epub` or `.opf` file. Returns `ParsedContentOpf`. |
+
+> **Note:** All functions accept `.epub` files directly. No need to extract first!
 
 ### Classes
 
@@ -141,9 +143,27 @@ extractor.cleanup_extraction(path)
 | `validate_epub_structure(path)` | Check EPUB spec compliance. |
 | `cleanup_extraction(dir)` | Delete extracted files. |
 
+#### DublinCoreService
+
+High-level service for metadata extraction. Accepts both `.epub` and `.opf` files.
+
+```python
+from epub_sage import create_service
+
+service = create_service()
+
+# Works with .epub files directly!
+metadata = service.extract_basic_metadata("book.epub")
+print(f"Title: {metadata['title']}")
+print(f"Author: {metadata['author']}")
+
+# Also works with .opf files for backward compatibility
+metadata = service.extract_basic_metadata("/path/to/content.opf")
+```
+
 #### DublinCoreParser
 
-Parse `content.opf` for Dublin Core metadata.
+Low-level parser for `content.opf` files (requires extracted EPUB).
 
 ```python
 from epub_sage import DublinCoreParser
