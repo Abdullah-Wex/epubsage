@@ -40,5 +40,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type hints throughout with `py.typed` marker
 - Comprehensive test suite (60+ tests)
 
-[Unreleased]: https://github.com/abdullahwex/epubsage/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/abdullahwex/epubsage/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Abdullah-Wex/epubsage/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Abdullah-Wex/epubsage/releases/tag/v0.1.0

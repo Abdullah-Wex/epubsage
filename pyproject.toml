@@ -37,11 +37,11 @@ dependencies = [
 epub-sage = "epub_sage.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/abdullahwex/epubsage"
-Repository = "https://github.com/abdullahwex/epubsage"
-Documentation = "https://github.com/abdullahwex/epubsage#readme"
-Issues = "https://github.com/abdullahwex/epubsage/issues"
-Changelog = "https://github.com/abdullahwex/epubsage/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/Abdullah-Wex/epubsage"
+Repository = "https://github.com/Abdullah-Wex/epubsage"
+Documentation = "https://github.com/Abdullah-Wex/epubsage#readme"
+Issues = "https://github.com/Abdullah-Wex/epubsage/issues"
+Changelog = "https://github.com/Abdullah-Wex/epubsage/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [

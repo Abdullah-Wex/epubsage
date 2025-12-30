@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/epubsage.svg)](https://pypi.org/project/epubsage/)
 [![Python versions](https://img.shields.io/pypi/pyversions/epubsage.svg)](https://pypi.org/project/epubsage/)
-[![Tests](https://github.com/abdullahwex/epubsage/actions/workflows/tests.yml/badge.svg)](https://github.com/abdullahwex/epubsage/actions/workflows/tests.yml)
+[![Tests](https://github.com/Abdullah-Wex/epubsage/actions/workflows/tests.yml/badge.svg)](https://github.com/Abdullah-Wex/epubsage/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **EpubSage** is a Python library for extracting structured content and metadata from EPUB files. It handles the complexity of diverse publisher formats (Manning, O'Reilly, Packt, etc.) and provides a clean, unified API for accessing book data.
