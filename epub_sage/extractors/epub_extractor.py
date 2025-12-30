@@ -8,7 +8,7 @@ import zipfile
 import hashlib
 import shutil
 from pathlib import Path
-from typing import Dict, Optional, List, Any, cast
+from typing import Dict, Optional, List, Any
 
 
 class EpubExtractor:

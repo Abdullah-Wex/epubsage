@@ -6,7 +6,7 @@ wrapper levels and groups content by headers for any EPUB publisher format.
 """
 
 from bs4 import BeautifulSoup, Tag
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional
 import os
 
 
