@@ -47,3 +47,6 @@ extracted_book.json
 coverage.xml
 .coverage
 htmlcov/
+
+# Release notes (local only)
+release.md
