@@ -34,7 +34,7 @@ class EpubStructureParser:
         self.parsing_errors = []
 
     def parse_complete_structure(self, opf_result: ParsedContentOpf,
-                               epub_dir: str = None) -> EpubStructure:
+                               epub_dir: Optional[str] = None) -> EpubStructure:
         """
         Parse complete EPUB structure from content.opf result.
 
@@ -48,7 +48,7 @@ class EpubStructureParser:
         return self.parse_structure(opf_result, epub_dir)
 
     def parse_structure(self, opf_result: ParsedContentOpf,
-                        epub_dir: str = None) -> EpubStructure:
+                        epub_dir: Optional[str] = None) -> EpubStructure:
         """
         Deprecated. Use parse_complete_structure instead.
         """
@@ -303,7 +303,7 @@ class EpubStructureParser:
             nav_points: List[NavigationPoint]):
         """Enhance structure items with information from TOC."""
         # Create mapping of href to navigation info
-        nav_map = {}
+        nav_map: Dict[str, List[NavigationPoint]] = {}
         for nav_point in self.toc_parser.flatten_navigation_tree(nav_points):
             # Clean href (remove fragments)
             clean_href = nav_point.href.split('#')[0]
@@ -365,7 +365,7 @@ class EpubStructureParser:
     def _associate_images_with_content(
             self,
             structure: EpubStructure,
-            epub_dir: str = None):
+            epub_dir: Optional[str] = None):
         """Associate images with chapters and content based on naming patterns and content discovery."""
         logger.debug(
             f"Associating {len(structure.images)} images with content")

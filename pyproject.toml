@@ -51,6 +51,9 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[tool.hatch.build]
+packages = ["epub_sage"]
+
 [tool.hatch.build.targets.sdist]
 include = ["/epub_sage", "/README.md", "/LICENSE", "/pyproject.toml", "/CHANGELOG.md"]
 

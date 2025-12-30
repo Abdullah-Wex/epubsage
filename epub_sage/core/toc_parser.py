@@ -159,7 +159,7 @@ class TocParser:
                           namespaces: Dict[str,
                                            str],
                           level: int = 1,
-                          parent_id: str = None) -> List[NavigationPoint]:
+                          parent_id: Optional[str] = None) -> List[NavigationPoint]:
         """
         Recursively parse navPoint elements from NCX.
 
@@ -194,7 +194,7 @@ class TocParser:
         return nav_points
 
     def _parse_nav_list(self, ol_element: ET.Element, level: int = 1,
-                        parent_id: str = None) -> List[NavigationPoint]:
+                        parent_id: Optional[str] = None) -> List[NavigationPoint]:
         """
         Parse navigation from EPUB 3.0 list structure.
 
@@ -239,7 +239,7 @@ class TocParser:
                                    namespaces: Dict[str,
                                                     str],
                                    level: int,
-                                   parent_id: str = None) -> Optional[NavigationPoint]:
+                                   parent_id: Optional[str] = None) -> Optional[NavigationPoint]:
         """Create NavigationPoint from NCX navPoint element."""
         # Get attributes
         nav_id = nav_element.get('id', '')
@@ -287,7 +287,7 @@ class TocParser:
             self,
             li_element: ET.Element,
             level: int,
-            parent_id: str = None,
+            parent_id: Optional[str] = None,
             play_order: int = 1) -> Optional[NavigationPoint]:
         """Create NavigationPoint from EPUB 3.0 li element."""
         # Find anchor element

@@ -84,7 +84,7 @@ class DublinCoreParser:
     def parse_xml(
             self,
             root: ET.Element,
-            file_path: str = None) -> ParsedContentOpf:
+            file_path: Optional[str] = None) -> ParsedContentOpf:
         """
         Parse Dublin Core metadata from XML root element.
 
@@ -302,7 +302,7 @@ class DublinCoreParser:
     def _collect_raw_metadata(
             self, metadata_element: ET.Element) -> Dict[str, Any]:
         """Collect all metadata elements for debugging and extension."""
-        raw_metadata = {}
+        raw_metadata: Dict[str, Any] = {}
 
         for element in metadata_element:
             # Get tag name without namespace

@@ -8,7 +8,7 @@ import zipfile
 import hashlib
 import shutil
 from pathlib import Path
-from typing import Dict, Optional, List, Any
+from typing import Dict, Optional, List, Any, cast
 
 
 class EpubExtractor:
@@ -47,12 +47,12 @@ class EpubExtractor:
             FileNotFoundError: If EPUB file doesn't exist
             ValueError: If file is not a valid ZIP/EPUB
         """
-        epub_path = Path(epub_path)
-        if not epub_path.exists():
+        epub_file = Path(epub_path)
+        if not epub_file.exists():
             raise FileNotFoundError(f"EPUB file not found: {epub_path}")
 
         # Generate unique book ID from file hash
-        book_id = self.generate_book_id(str(epub_path))
+        book_id = self.generate_book_id(epub_path)
 
         # Determine extraction directory
         if output_dir:
@@ -64,10 +64,10 @@ class EpubExtractor:
 
         # Extract ZIP file
         try:
-            with zipfile.ZipFile(epub_path, 'r') as zip_ref:
+            with zipfile.ZipFile(epub_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
         except zipfile.BadZipFile:
-            raise ValueError(f"Invalid ZIP/EPUB file: {epub_path}")
+            raise ValueError(f"Invalid ZIP/EPUB file: {epub_file}")
 
         return str(extract_dir)
 
@@ -97,12 +97,12 @@ class EpubExtractor:
         Returns:
             Dictionary with file info
         """
-        epub_path = Path(epub_path)
-        if not epub_path.exists():
+        epub_file = Path(epub_path)
+        if not epub_file.exists():
             return {"error": "File not found", "success": False}
 
         try:
-            with zipfile.ZipFile(epub_path, 'r') as zip_ref:
+            with zipfile.ZipFile(epub_file, 'r') as zip_ref:
                 file_list = zip_ref.namelist()
                 total_size = sum(
                     zip_ref.getinfo(name).file_size for name in file_list)
@@ -124,8 +124,8 @@ class EpubExtractor:
                 css_files = [f for f in file_list if f.endswith('.css')]
 
                 return {
-                    "book_id": self.generate_book_id(str(epub_path)),
-                    "filename": epub_path.name,
+                    "book_id": self.generate_book_id(epub_path),
+                    "filename": epub_file.name,
                     "total_files": len(file_list),
                     "total_size_bytes": total_size,
                     "total_size_mb": round(total_size / (1024 * 1024), 2),
@@ -240,13 +240,15 @@ class EpubExtractor:
         Returns:
             Validation results dictionary
         """
-        results = {
+        errors: List[str] = []
+        warnings: List[str] = []
+        results: Dict[str, Any] = {
             "is_valid": False,
             "has_mimetype": False,
             "has_container_xml": False,
             "has_content_opf": False,
-            "errors": [],
-            "warnings": []
+            "errors": errors,
+            "warnings": warnings
         }
 
         try:
@@ -259,16 +261,16 @@ class EpubExtractor:
                     # Check if mimetype is first and uncompressed
                     mimetype_info = zip_ref.getinfo('mimetype')
                     if mimetype_info.compress_type != zipfile.ZIP_STORED:
-                        results["warnings"].append(
+                        warnings.append(
                             "mimetype file should be uncompressed")
                 else:
-                    results["errors"].append("Missing mimetype file")
+                    errors.append("Missing mimetype file")
 
                 # Check for META-INF/container.xml
                 if 'META-INF/container.xml' in file_list:
                     results["has_container_xml"] = True
                 else:
-                    results["errors"].append("Missing META-INF/container.xml")
+                    errors.append("Missing META-INF/container.xml")
 
                 # Check for content.opf
                 for name in file_list:
@@ -277,7 +279,7 @@ class EpubExtractor:
                         break
 
                 if not results["has_content_opf"]:
-                    results["errors"].append("Missing content.opf file")
+                    errors.append("Missing content.opf file")
 
                 # Determine validity
                 results["is_valid"] = (
@@ -289,10 +291,10 @@ class EpubExtractor:
                 return results
 
         except zipfile.BadZipFile:
-            results["errors"].append("Not a valid ZIP file")
+            errors.append("Not a valid ZIP file")
             return results
         except Exception as e:
-            results["errors"].append(f"Validation error: {str(e)}")
+            errors.append(f"Validation error: {str(e)}")
             return results
 
 

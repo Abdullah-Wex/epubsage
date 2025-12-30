@@ -5,18 +5,18 @@ This module provides intelligent content extraction that automatically detects
 wrapper levels and groups content by headers for any EPUB publisher format.
 """
 
-from bs4 import BeautifulSoup
-from typing import List, Dict, Any
+from bs4 import BeautifulSoup, Tag
+from typing import List, Dict, Any, Optional, cast
 import os
 
 
-def is_generic_header(element) -> bool:
+def is_generic_header(element: Optional[Tag]) -> bool:
     """
     Identifies if an element is a header using tags, classes, and roles.
 
     Broadens detection beyond h1-h6 to support diverse writer styles.
     """
-    if not element or not element.name:
+    if not element or not hasattr(element, 'name') or not element.name:
         return False
 
     if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
@@ -34,9 +34,11 @@ def is_generic_header(element) -> bool:
     ]
 
     # Combine class and ID for a single check
-    cls = " ".join(element.get('class', [])) if element.get('class') else ""
+    class_attr = element.get('class')
+    cls = " ".join(class_attr) if isinstance(class_attr, list) else (class_attr or "")
     id_val = element.get('id', '') or ""
-    combined = (cls + " " + id_val).lower()
+    id_str = id_val if isinstance(id_val, str) else ""
+    combined = (cls + " " + id_str).lower()
 
     if any(kw in combined for kw in keywords):
         # Additional safety: headers usually shouldn't be too long
@@ -90,15 +92,17 @@ def extract_content_sections(html_file_path: str) -> List[Dict[str, Any]]:
         for junk in body.find_all(junk_tag):
             # Only decompose if it's not a generic header or doesn't contain
             # one
-            if not is_generic_header(junk) and not any(is_generic_header(
-                    c) for c in junk.descendants if getattr(c, 'name', None)):
+            if not is_generic_header(junk) and not any(
+                    is_generic_header(c if isinstance(c, Tag) else None)
+                    for c in junk.descendants if getattr(c, 'name', None)):
                 junk.decompose()
 
     # Navigate to content level using child count logic
-    current_container = body
+    current_container: Tag = body
     while True:
-        children = [
-            child for child in current_container.children if child.name]
+        children: List[Tag] = [
+            child for child in current_container.children
+            if isinstance(child, Tag) and child.name]
 
         # If only 1 child = wrapper, go deeper
         if len(children) == 1:
@@ -106,7 +110,7 @@ def extract_content_sections(html_file_path: str) -> List[Dict[str, Any]]:
         else:
             # Multiple children = check if they are content or just wrapper containers
             # Look for headers as indication of content level
-            header_tags = [
+            header_tags: List[Tag] = [
                 child for child in children if is_generic_header(child)]
 
             if len(header_tags) > 0:
@@ -120,14 +124,15 @@ def extract_content_sections(html_file_path: str) -> List[Dict[str, Any]]:
                 break
 
     # Get all content elements at this level
-    content_children = []
+    content_children: List[Tag] = []
     if current_container:
         # Get all direct children (no filtering by tag type)
-        all_direct_children = [
-            child for child in current_container.children if child.name]
+        all_direct_children: List[Tag] = [
+            child for child in current_container.children
+            if isinstance(child, Tag) and child.name]
 
         # Check if we have headers at this level
-        direct_headers = [
+        direct_headers: List[Tag] = [
             child for child in all_direct_children if is_generic_header(child)]
 
         if direct_headers:
@@ -140,8 +145,9 @@ def extract_content_sections(html_file_path: str) -> List[Dict[str, Any]]:
             for child in all_direct_children:
                 if child.name in ['div', 'section', 'article']:
                     # Check if this container has any children
-                    child_elements = [
-                        subchild for subchild in child.children if subchild.name]
+                    child_elements: List[Tag] = [
+                        subchild for subchild in child.children
+                        if isinstance(subchild, Tag) and subchild.name]
                     if child_elements:
                         # Container has children, extract ALL of them
                         content_children.extend(child_elements)
@@ -155,32 +161,32 @@ def extract_content_sections(html_file_path: str) -> List[Dict[str, Any]]:
                     content_children.append(child)
 
     # Group by headers
-    sections = []
-    current_header = None
-    current_content = []
-    current_images = []
+    sections: List[Dict[str, Any]] = []
+    current_header: Optional[str] = None
+    current_content: List[Dict[str, Any]] = []
+    current_images: List[str] = []
 
     for child in content_children:
         # Extract images from this child element
-        child_images = []
+        child_images: List[str] = []
         # Standard img tags
         for img in child.find_all('img'):
             src = img.get('src')
-            if src:
+            if src and isinstance(src, str):
                 child_images.append(src)
         # SVG image tags
         for svg_img in child.find_all('image'):
             href = svg_img.get('href') or svg_img.get('xlink:href')
-            if href:
+            if href and isinstance(href, str):
                 child_images.append(href)
         # Check if the child itself is an image tag
         if child.name == 'img':
             src = child.get('src')
-            if src and src not in child_images:
+            if src and isinstance(src, str) and src not in child_images:
                 child_images.append(src)
         elif child.name == 'image':
             href = child.get('href') or child.get('xlink:href')
-            if href and href not in child_images:
+            if href and isinstance(href, str) and href not in child_images:
                 child_images.append(href)
 
         # Step 3.2: Filter out junk elements (boilerplate/link-heavy)
