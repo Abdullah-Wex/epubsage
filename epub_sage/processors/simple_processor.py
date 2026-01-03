@@ -4,6 +4,7 @@ Simple EPUB Processor - One-step processing for ease of use.
 Provides a simple interface similar to Epub_service for quick EPUB processing.
 """
 import os
+import re
 import tempfile
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
@@ -11,7 +12,27 @@ from typing import List, Dict, Optional, Any
 from ..extractors.epub_extractor import EpubExtractor
 from ..extractors.content_extractor import extract_book_content
 from ..core.dublin_core_parser import DublinCoreParser
+from ..core.structure_parser import EpubStructureParser
 from ..models.dublin_core import DublinCoreMetadata
+from ..models.structure import EpubStructure
+
+
+def _is_generated_title(title: str) -> bool:
+    """Check if title looks auto-generated from manifest ID."""
+    if not title:
+        return True
+    # Titles ending with digits are likely auto-generated (e.g., "Title Page7")
+    return bool(re.search(r'\d+$', title))
+
+
+def _get_best_title(struct_title: str | None, html_title: str | None, fallback: str) -> str:
+    """Determine best title: prefer HTML header over generated manifest ID."""
+    if struct_title and _is_generated_title(struct_title) and html_title:
+        return html_title
+    elif struct_title:
+        return struct_title
+    else:
+        return html_title or fallback
 
 
 @dataclass
@@ -68,6 +89,7 @@ class SimpleEpubProcessor:
         self.temp_dir = temp_dir or tempfile.gettempdir()
         self.extractor = EpubExtractor(base_dir=self.temp_dir)
         self.parser = DublinCoreParser()
+        self.structure_parser = EpubStructureParser()
 
     def process_epub(
             self,
@@ -176,6 +198,21 @@ class SimpleEpubProcessor:
                     metadata = None
                     parsed_opf = None
 
+            # Step 3.1: Parse complete structure for classification
+            structure = None
+            structure_map = {}
+            if parsed_opf:
+                try:
+                    structure = self.structure_parser.parse_complete_structure(
+                        parsed_opf, extracted_dir
+                    )
+                    # Create href->StructureItem map for all content types
+                    for item in (structure.chapters + structure.front_matter +
+                                 structure.back_matter + structure.parts):
+                        structure_map[item.href] = item
+                except Exception as e:
+                    errors.append(f"Structure parsing warning: {str(e)}")
+
             # Step 4: Extract content
             chapters = []
             total_words = 0
@@ -243,15 +280,30 @@ class SimpleEpubProcessor:
                             word_count = len(chapter_text.split())
                             total_words += word_count
 
-                            chapters.append({
+                            # Get structure metadata if available
+                            struct_item = structure_map.get(href)
+                            struct_title = struct_item.title if struct_item else None
+                            best_title = _get_best_title(
+                                struct_title, main_title, f'Section {chapter_index + 1}'
+                            )
+
+                            chapter_dict = {
                                 'chapter_id': chapter_index,
-                                'title': main_title or f'Section {chapter_index + 1}',
+                                'title': best_title,
                                 'href': href,
                                 'word_count': word_count,
                                 'content': consolidated_content,
                                 # Deduplicate images
-                                'images': list(dict.fromkeys(consolidated_images))
-                            })
+                                'images': list(dict.fromkeys(consolidated_images)),
+                                # Structure metadata
+                                'content_type': struct_item.content_type.value if struct_item else 'chapter',
+                                'chapter_number': struct_item.chapter_number if struct_item else None,
+                                'part_number': struct_item.part_number if struct_item else None,
+                                'section_number': struct_item.section_number if struct_item else None,
+                                'level': struct_item.level if struct_item else 1,
+                                'linear': struct_item.linear if struct_item else True,
+                            }
+                            chapters.append(chapter_dict)
                             chapter_index += 1
                             processed_hrefs.add(href)
 
@@ -284,14 +336,28 @@ class SimpleEpubProcessor:
                                 [item['text'] for item in consolidated_content])
                             word_count = len(chapter_text.split())
                             total_words += word_count
-                            chapters.append({
+                            # Get structure metadata if available
+                            struct_item = structure_map.get(href)
+                            struct_title = struct_item.title if struct_item else None
+                            best_title = _get_best_title(
+                                struct_title, main_title, f'Extra: {os.path.basename(href)}'
+                            )
+                            chapter_dict = {
                                 'chapter_id': chapter_index,
-                                'title': main_title or f'Extra: {os.path.basename(href)}',
+                                'title': best_title,
                                 'href': href,
                                 'word_count': word_count,
                                 'content': consolidated_content,
-                                'images': list(dict.fromkeys(consolidated_images))
-                            })
+                                'images': list(dict.fromkeys(consolidated_images)),
+                                # Structure metadata
+                                'content_type': struct_item.content_type.value if struct_item else 'other',
+                                'chapter_number': struct_item.chapter_number if struct_item else None,
+                                'part_number': struct_item.part_number if struct_item else None,
+                                'section_number': struct_item.section_number if struct_item else None,
+                                'level': struct_item.level if struct_item else 1,
+                                'linear': struct_item.linear if struct_item else False,
+                            }
+                            chapters.append(chapter_dict)
                             chapter_index += 1
                             processed_hrefs.add(href)
                 else:
@@ -324,13 +390,21 @@ class SimpleEpubProcessor:
                             [item['text'] for item in consolidated_content])
                         word_count = len(chapter_text.split())
                         total_words += word_count
+                        # Fallback: no structure data available
                         chapters.append({
                             'chapter_id': chapter_index,
                             'title': main_title or f'Section {chapter_index + 1}',
                             'href': href,
                             'word_count': word_count,
                             'content': consolidated_content,
-                            'images': list(dict.fromkeys(consolidated_images))
+                            'images': list(dict.fromkeys(consolidated_images)),
+                            # Default structure metadata (no OPF available)
+                            'content_type': 'chapter',
+                            'chapter_number': chapter_index + 1,
+                            'part_number': None,
+                            'section_number': None,
+                            'level': 1,
+                            'linear': True,
                         })
                         chapter_index += 1
 

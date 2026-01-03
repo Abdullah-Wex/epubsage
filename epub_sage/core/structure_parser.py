@@ -224,22 +224,39 @@ class EpubStructureParser:
     def _parse_toc_structure(self, epub_dir: str, structure: EpubStructure):
         """Parse TOC file to extract navigation structure."""
         epub_path = Path(epub_dir)
-
-        # Look for TOC files in common locations
-        toc_candidates = [
-            epub_path / "toc.ncx",
-            epub_path / "OEBPS" / "toc.ncx",
-            epub_path / "nav.xhtml",
-            epub_path / "OEBPS" / "nav.xhtml",
-            epub_path / "toc.xhtml",
-            epub_path / "OEBPS" / "toc.xhtml",
-        ]
-
         toc_file = None
-        for candidate in toc_candidates:
-            if candidate.exists():
-                toc_file = candidate
-                break
+
+        # Step 1: Check manifest for nav item (EPUB 3.0) - most reliable
+        if self._opf_result:
+            for item in self._opf_result.manifest_items:
+                props = item.get('properties', '')
+                if 'nav' in props:
+                    href = item.get('href', '')
+                    if href:
+                        candidate = epub_path / href
+                        if candidate.exists():
+                            toc_file = candidate
+                            break
+
+        # Step 2: Fall back to common locations
+        if not toc_file:
+            toc_candidates = [
+                epub_path / "toc.ncx",
+                epub_path / "OEBPS" / "toc.ncx",
+                epub_path / "OPS" / "toc.ncx",
+                epub_path / "OEBPS" / "Text" / "toc.ncx",
+                epub_path / "nav.xhtml",
+                epub_path / "OEBPS" / "nav.xhtml",
+                epub_path / "OEBPS" / "Text" / "nav.xhtml",
+                epub_path / "toc.xhtml",
+                epub_path / "OEBPS" / "toc.xhtml",
+                epub_path / "OEBPS" / "Text" / "toc.xhtml",
+            ]
+
+            for candidate in toc_candidates:
+                if candidate.exists():
+                    toc_file = candidate
+                    break
 
         if not toc_file:
             logger.warning("No TOC file found")

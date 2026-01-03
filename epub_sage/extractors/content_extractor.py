@@ -6,8 +6,78 @@ wrapper levels and groups content by headers for any EPUB publisher format.
 """
 
 from bs4 import BeautifulSoup, Tag
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 import os
+
+
+# Common EPUB image extensions (YAGNI: only what's actually used)
+IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp')
+
+# External URL prefixes (DRY: single source of truth)
+EXTERNAL_PREFIXES = ('http://', 'https://', 'data:')
+
+
+def _is_external_url(path: str) -> bool:
+    """Check if path is an external URL."""
+    return path.startswith(EXTERNAL_PREFIXES)
+
+
+def _normalize_path(path: str) -> str:
+    """Normalize path separators and handle parent refs."""
+    normalized = path.replace('\\', '/')
+    while normalized.startswith('../'):
+        normalized = normalized[3:]
+    return normalized
+
+
+def discover_epub_images(epub_directory_path: str) -> Set[str]:
+    """Discover all image files in an EPUB directory."""
+    image_paths: Set[str] = set()
+
+    for root, _, files in os.walk(epub_directory_path):
+        for file in files:
+            if file.lower().endswith(IMAGE_EXTENSIONS):
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, epub_directory_path)
+                image_paths.add(_normalize_path(relative_path))
+
+    return image_paths
+
+
+def resolve_image_path(img_src: str, html_rel_dir: str) -> Optional[str]:
+    """Resolve a relative image path to EPUB-root-relative path."""
+    if _is_external_url(img_src):
+        return img_src
+
+    # Remove fragment/query
+    base_src = img_src.split('#')[0].split('?')[0]
+    if not base_src:
+        return None
+
+    resolved = os.path.normpath(os.path.join(html_rel_dir, base_src))
+    return _normalize_path(resolved)
+
+
+def resolve_and_validate_images(
+    raw_images: List[str],
+    html_rel_dir: str,
+    valid_images: Set[str]
+) -> List[str]:
+    """Resolve image paths and filter to only those that exist in EPUB."""
+    seen: Set[str] = set()
+    result: List[str] = []
+
+    for img_src in raw_images:
+        resolved = resolve_image_path(img_src, html_rel_dir)
+        if not resolved or resolved in seen:
+            continue
+
+        # Include if external URL or exists in EPUB
+        if _is_external_url(resolved) or resolved in valid_images:
+            seen.add(resolved)
+            result.append(resolved)
+
+    return result
 
 
 def is_generic_header(element: Optional[Tag]) -> bool:
@@ -256,6 +326,9 @@ def extract_book_content(epub_directory_path: str) -> Dict[str, Any]:
     """
     content_data = {}
 
+    # Step 1: Discover all valid images in the EPUB
+    valid_images = discover_epub_images(epub_directory_path)
+
     # Process all HTML files in the directory recursively
     # This is more robust than looking specifically for 'OEBPS'
     for root, dirs, files in os.walk(epub_directory_path):
@@ -268,46 +341,29 @@ def extract_book_content(epub_directory_path: str) -> Dict[str, Any]:
                 file_path = os.path.join(root, file)
                 # Path relative to the EPUB root
                 relative_path = os.path.relpath(file_path, epub_directory_path)
+                # Normalize path separators
+                relative_path = relative_path.replace('\\', '/')
 
                 sections = extract_content_sections(file_path)
                 if sections:
-                    # Step 1.3: Resolve image paths to be "absolute-in-epub"
-                    # (relative to root)
+                    # Resolve and validate image paths
                     html_rel_dir = os.path.dirname(relative_path)
 
                     for section in sections:
-                        # 1. Resolve section-level images
-                        resolved_section_images = []
-                        for img_src in section.get('images', []):
-                            if img_src.startswith(('http://', 'https://')):
-                                resolved_section_images.append(img_src)
-                                continue
-                            base_img_src = img_src.split('#')[0]
-                            resolved_path = os.path.normpath(
-                                os.path.join(html_rel_dir, base_img_src))
-                            if resolved_path.startswith('..'):
-                                resolved_path = resolved_path.replace(
-                                    '../', '').lstrip('/')
-                            if resolved_path not in resolved_section_images:
-                                resolved_section_images.append(resolved_path)
-                        section['images'] = resolved_section_images
+                        # Resolve section-level images
+                        section['images'] = resolve_and_validate_images(
+                            section.get('images', []),
+                            html_rel_dir,
+                            valid_images
+                        )
 
-                        # 2. Resolve element-level images (new)
+                        # Resolve element-level images
                         for block in section.get('content', []):
-                            resolved_block_images = []
-                            for img_src in block.get('images', []):
-                                if img_src.startswith(('http://', 'https://')):
-                                    resolved_block_images.append(img_src)
-                                    continue
-                                base_img_src = img_src.split('#')[0]
-                                resolved_path = os.path.normpath(
-                                    os.path.join(html_rel_dir, base_img_src))
-                                if resolved_path.startswith('..'):
-                                    resolved_path = resolved_path.replace(
-                                        '../', '').lstrip('/')
-                                if resolved_path not in resolved_block_images:
-                                    resolved_block_images.append(resolved_path)
-                            block['images'] = resolved_block_images
+                            block['images'] = resolve_and_validate_images(
+                                block.get('images', []),
+                                html_rel_dir,
+                                valid_images
+                            )
 
                     content_data[relative_path] = sections
 

@@ -12,9 +12,14 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-def save_to_json(data: Any, output_file: str):
+def save_to_json(data: Any, output_file: str, indent: int = 2):
     """
     Saves data to a JSON file with proper encoding for dates and non-ASCII characters.
+
+    Args:
+        data: Data to serialize
+        output_file: Path to output file
+        indent: JSON indentation (None for compact, default 2)
     """
     with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
+        json.dump(data, f, indent=indent, ensure_ascii=False, cls=DateTimeEncoder)

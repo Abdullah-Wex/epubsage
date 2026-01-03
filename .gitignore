@@ -50,3 +50,9 @@ htmlcov/
 
 # Release notes (local only)
 release.md
+linkedin_post_arabic.txt
+linkedin_post_english.txt
+
+# Temporary files
+*.ipynb
+cover.png

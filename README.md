@@ -5,33 +5,39 @@
 [![Tests](https://github.com/Abdullah-Wex/epubsage/actions/workflows/tests.yml/badge.svg)](https://github.com/Abdullah-Wex/epubsage/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**EpubSage** is a Python library for extracting structured content and metadata from EPUB files. It handles the complexity of diverse publisher formats (Manning, O'Reilly, Packt, etc.) and provides a clean, unified API for accessing book data.
-
----
+**EpubSage** is a powerful Python library and CLI tool for extracting structured content, metadata, and images from EPUB files. It handles the complexity of diverse publisher formats and provides a clean, unified API.
 
 ## Why EpubSage?
 
-EPUB files vary significantly between publishers. Headers can be nested in `<span>` tags, chapters can be split across files, and metadata formats differ. EpubSage abstracts this complexity:
+EPUB files vary significantly between publishers. Headers can be nested in `<span>` tags, chapters split across files, and metadata formats differ wildly. EpubSage abstracts this complexity:
 
--   **Publisher-Agnostic**: Tested against real-world books from major technical publishers.
--   **Complete Extraction**: Returns metadata, chapters, word counts, and reading time estimates.
--   **Modular**: Use the high-level `process_epub()` function, or access individual parsers directly.
--   **CLI Included**: Extract books from the command line without writing code.
+```python
+from epub_sage import process_epub
 
----
+result = process_epub("book.epub")
+print(f"Title: {result.title}")
+print(f"Chapters: {result.total_chapters}")
+```
 
-## Table of Contents
+That's it. One function call to extract everything.
 
-1.  [Installation](#installation)
-2.  [Quick Start](#quick-start)
-3.  [API Reference](#api-reference)
-4.  [Command Line Interface](#command-line-interface)
-5.  [Architecture](#architecture)
-6.  [Error Handling](#error-handling)
-7.  [Development](#development)
-8.  [License](#license)
+## Features
 
----
+| Feature | Description |
+|---------|-------------|
+| **Publisher-Agnostic** | Works with O'Reilly, Packt, Manning, and more |
+| **Complete Extraction** | Chapters, metadata, images, word counts, reading time |
+| **Smart Image Handling** | Discovers and validates all referenced images |
+| **Content Classification** | Identifies front matter, chapters, back matter, parts |
+| **Dublin Core Metadata** | Full standards-compliant metadata extraction |
+| **TOC Parsing** | Supports NCX (EPUB 2) and NAV (EPUB 3) |
+| **Full-Text Search** | Search across all book content |
+| **CLI Tool** | 13 commands for complete EPUB analysis |
+
+## Requirements
+
+- Python 3.10+
+- Dependencies: `beautifulsoup4`, `lxml`, `pydantic`, `typer`, `rich`
 
 ## Installation
 
@@ -39,294 +45,255 @@ EPUB files vary significantly between publishers. Headers can be nested in `<spa
 pip install epubsage
 ```
 
-For development with `uv`:
+Or with `uv`:
 
 ```bash
 uv add epubsage
 ```
 
----
-
 ## Quick Start
 
-### Basic Usage
+### Python
 
 ```python
 from epub_sage import process_epub
 
-result = process_epub("my_book.epub")
+result = process_epub("book.epub")
+
+print(f"Title: {result.title}")
+print(f"Author: {result.author}")
+print(f"Words: {result.total_words:,}")
+print(f"Reading time: {result.estimated_reading_time}")
+
+for chapter in result.chapters[:3]:
+    print(f"  {chapter['chapter_id']}: {chapter['title']}")
+```
+
+![Python Basic Usage](docs/screenshots/python-basic.png)
+
+### Command Line
+
+```bash
+epub-sage info book.epub
+```
+
+![CLI Info](docs/screenshots/cli-info.png)
+
+## Command Line Interface
+
+EpubSage includes 13 commands for complete EPUB analysis.
+
+```bash
+epub-sage --help
+```
+
+![CLI Help](docs/screenshots/cli-help.png)
+
+| Command | Description |
+|---------|-------------|
+| `info` | Quick book summary |
+| `stats` | Detailed statistics |
+| `chapters` | List chapters with word counts |
+| `metadata` | Dublin Core metadata |
+| `toc` | Table of contents |
+| `images` | Image distribution |
+| `search` | Full-text search |
+| `validate` | Validate EPUB structure |
+| `spine` | Reading order |
+| `manifest` | All EPUB resources |
+| `extract` | Export to JSON |
+| `list` | Raw EPUB contents |
+| `cover` | Extract cover image |
+
+**[View full CLI documentation →](docs/CLI.md)**
+
+### Key Commands
+
+#### chapters
+
+```bash
+epub-sage chapters book.epub
+```
+
+![CLI Chapters](docs/screenshots/cli-chapters.png)
+
+#### search
+
+```bash
+epub-sage search book.epub "machine learning"
+```
+
+![CLI Search](docs/screenshots/cli-search.png)
+
+#### extract
+
+```bash
+epub-sage extract book.epub -o output.json
+```
+
+![CLI Extract](docs/screenshots/cli-extract.png)
+
+## Python Library
+
+### Basic Processing
+
+```python
+from epub_sage import process_epub
+
+result = process_epub("book.epub")
 
 if result.success:
     print(f"Title: {result.title}")
     print(f"Author: {result.author}")
     print(f"Chapters: {result.total_chapters}")
-    print(f"Words: {result.total_words}")
 else:
     print(f"Errors: {result.errors}")
 ```
 
-### Export to JSON
+### Iterate Chapters
 
 ```python
-from epub_sage import process_epub, save_to_json
-
-result = process_epub("my_book.epub")
-
-output = {
-    "title": result.title,
-    "author": result.author,
-    "chapters": result.chapters
-}
-save_to_json(output, "book_data.json")
+for chapter in result.chapters:
+    print(f"{chapter['chapter_id']}: {chapter['title']}")
+    print(f"  Words: {chapter['word_count']}")
+    print(f"  Images: {len(chapter['images'])}")
+    print(f"  Type: {chapter['content_type']}")
 ```
 
----
+![Python Chapters](docs/screenshots/python-chapters.png)
 
-## API Reference
-
-### High-Level Functions
-
-| Function | Description |
-|----------|-------------|
-| `process_epub(path)` | Process an EPUB file. Returns `SimpleEpubResult`. |
-| `quick_extract(path)` | Extract EPUB to a directory. Returns path string. |
-| `get_epub_info(path)` | Get file info without extraction. Returns dict. |
-| `save_to_json(data, path)` | Save data to JSON with datetime support. |
-| `parse_content_opf(path)` | Parse `.epub` or `.opf` file. Returns `ParsedContentOpf`. |
-
-> **Note:** All functions accept `.epub` files directly. No need to extract first!
-
-### Classes
-
-#### SimpleEpubProcessor
-
-Main processing class for full control over the extraction pipeline.
+### Access Metadata
 
 ```python
-from epub_sage import SimpleEpubProcessor
+metadata = result.full_metadata
 
-processor = SimpleEpubProcessor(temp_dir="/tmp/work")
-result = processor.process_epub("book.epub", cleanup=True)
-
-# Or process a pre-extracted directory
-result = processor.process_directory("/path/to/extracted/")
+print(f"Title: {metadata.title}")
+print(f"Publisher: {metadata.publisher}")
+print(f"ISBN: {metadata.get_isbn()}")
+print(f"Publication Date: {metadata.get_publication_date()}")
 ```
 
-**Methods:**
+![Python Metadata](docs/screenshots/python-metadata.png)
 
-| Method | Description |
-|--------|-------------|
-| `process_epub(path, cleanup=True)` | Full pipeline: extract, parse, return result. |
-| `process_directory(path)` | Process already-extracted EPUB contents. |
-| `quick_info(path)` | Return metadata only, minimal processing. |
-
-#### EpubExtractor
-
-Low-level ZIP handling and file management.
+### Extract Images
 
 ```python
-from epub_sage import EpubExtractor
-
-extractor = EpubExtractor(base_dir="/tmp/epubs")
-path = extractor.extract_epub("book.epub")
-opf = extractor.find_content_opf(path)
-extractor.cleanup_extraction(path)
+for chapter in result.chapters:
+    if chapter['images']:
+        print(f"Chapter: {chapter['title']}")
+        for img in chapter['images']:
+            print(f"  - {img}")
 ```
 
-**Methods:**
+![Python Images](docs/screenshots/python-images.png)
 
-| Method | Description |
-|--------|-------------|
-| `extract_epub(path)` | Extract ZIP to managed directory. |
-| `get_epub_info(path)` | File stats without extraction. |
-| `find_content_opf(dir)` | Locate `content.opf` in extracted tree. |
-| `validate_epub_structure(path)` | Check EPUB spec compliance. |
-| `cleanup_extraction(dir)` | Delete extracted files. |
-
-#### DublinCoreService
-
-High-level service for metadata extraction. Accepts both `.epub` and `.opf` files.
+### Content Blocks
 
 ```python
-from epub_sage import create_service
+chapter = result.chapters[0]
 
-service = create_service()
-
-# Works with .epub files directly!
-metadata = service.extract_basic_metadata("book.epub")
-print(f"Title: {metadata['title']}")
-print(f"Author: {metadata['author']}")
-
-# Also works with .opf files for backward compatibility
-metadata = service.extract_basic_metadata("/path/to/content.opf")
+for block in chapter['content']:
+    print(f"[{block['tag']}] {block['text'][:100]}...")
 ```
 
-#### DublinCoreParser
+![Python Content](docs/screenshots/python-content.png)
 
-Low-level parser for `content.opf` files (requires extracted EPUB).
+**[View full API documentation →](docs/API.md)**
 
-```python
-from epub_sage import DublinCoreParser
+**[View real-world examples →](docs/EXAMPLES.md)**
 
-parser = DublinCoreParser()
-result = parser.parse_file("/path/to/content.opf")
+## Output Format
 
-print(result.metadata.title)
-print(result.metadata.get_primary_author())
-print(result.metadata.get_isbn())
-```
-
-#### EpubStructureParser
-
-Full structure analysis: chapters, parts, images, navigation.
-
-```python
-from epub_sage import EpubStructureParser, DublinCoreParser
-
-dc_parser = DublinCoreParser()
-opf_data = dc_parser.parse_file(opf_path)
-
-struct_parser = EpubStructureParser()
-structure = struct_parser.parse_structure(opf_data, epub_dir)
-
-print(f"Chapters: {len(structure.chapters)}")
-print(f"Images: {len(structure.images)}")
-```
-
-### Data Models
-
-#### SimpleEpubResult
-
-Returned by `process_epub()`.
+### SimpleEpubResult
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `title` | `str` | Book title |
 | `author` | `str` | Primary author |
 | `publisher` | `str` | Publisher name |
-| `language` | `str` | Language code |
-| `chapters` | `list[dict]` | Chapter data with content |
+| `chapters` | `list[dict]` | Chapter data |
 | `total_chapters` | `int` | Chapter count |
 | `total_words` | `int` | Word count |
 | `estimated_reading_time` | `dict` | `{'hours': N, 'minutes': N}` |
 | `success` | `bool` | Processing status |
-| `errors` | `list[str]` | Error messages |
+| `full_metadata` | `DublinCoreMetadata` | Complete metadata |
 
-#### DublinCoreMetadata
-
-Pydantic model for metadata.
+### Chapter Dictionary
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `title` | `str` | Book title |
-| `creators` | `list` | Author objects with roles |
-| `publisher` | `str` | Publisher name |
-| `language` | `str` | ISO language code |
-| `identifiers` | `list` | ISBN, UUID, etc. |
-| `dates` | `list` | Publication dates |
-| `description` | `str` | Book description |
+| `chapter_id` | `int` | Sequential ID |
+| `title` | `str` | Chapter title |
+| `word_count` | `int` | Words in chapter |
+| `images` | `list[str]` | Image paths |
+| `content` | `list[dict]` | Content blocks |
+| `content_type` | `str` | `chapter`, `front_matter`, `back_matter`, `part` |
 
-**Helper Methods:** `get_primary_author()`, `get_isbn()`, `get_publication_date()`
-
----
-
-## Command Line Interface
-
-### Extract to JSON
-
-```bash
-epub-sage extract book.epub -o output.json
-```
-
-### Display Metadata
-
-```bash
-epub-sage info book.epub
-```
-
-Output:
-```
-----------------------------------------
-Title:     Build a Large Language Model (From Scratch)
-Author:    Sebastian Raschka
-Publisher: Manning Publications Co.
-Words:     84287
-Est. Time: 5 hours, 37 min
-Chapters:  21
-----------------------------------------
-```
-
-### List Chapters
-
-```bash
-epub-sage list book.epub
-```
-
----
+**[View complete data models →](docs/API.md#data-models)**
 
 ## Architecture
 
 ```
 epub_sage/
-├── core/                 # Low-level parsers
-│   ├── dublin_core_parser.py
-│   ├── structure_parser.py
-│   ├── toc_parser.py
-│   └── content_classifier.py
-├── extractors/           # EPUB handling
-│   ├── epub_extractor.py
-│   └── content_extractor.py
-├── processors/           # High-level pipelines
-│   └── simple_processor.py
-├── models/               # Pydantic data models
-├── services/             # Export, search
-└── utils/                # Helpers
+├── core/           # Parsers (Dublin Core, Structure, TOC)
+├── extractors/     # EPUB handling, content extraction
+├── processors/     # Processing pipelines
+├── models/         # Pydantic data models
+├── services/       # Search, export services
+└── cli.py          # Command-line interface
 ```
 
-**Data Flow:**
+**Processing Pipeline:**
 
-1.  `EpubExtractor` unzips the EPUB file.
-2.  `DublinCoreParser` reads `content.opf` for metadata.
-3.  `EpubStructureParser` analyzes chapters, images, and TOC.
-4.  `ContentExtractor` pulls text content from HTML files.
-5.  `SimpleEpubProcessor` orchestrates all steps and returns `SimpleEpubResult`.
-
----
-
-## Error Handling
-
-`SimpleEpubResult.success` indicates overall status. Errors are collected in `SimpleEpubResult.errors`:
-
-```python
-result = process_epub("book.epub")
-
-if not result.success:
-    for error in result.errors:
-        print(f"Error: {error}")
-```
-
-Common errors:
--   `"File not found"` - EPUB path invalid.
--   `"Invalid ZIP/EPUB file"` - Corrupted or non-EPUB file.
--   `"No content.opf file found"` - Missing required metadata file.
--   `"Content extraction error: ..."` - HTML parsing issue.
-
----
+1. `EpubExtractor` → Unzips EPUB
+2. `DublinCoreParser` → Extracts metadata
+3. `EpubStructureParser` → Analyzes structure
+4. `ContentExtractor` → Extracts text & images
+5. `SimpleEpubProcessor` → Orchestrates all steps
 
 ## Development
 
+### Setup
+
 ```bash
-make install   # Setup environment with uv
-make format    # Run autopep8 and ruff
-make lint      # Check code quality
-make test      # Run test suite (60+ tests)
-make clean     # Remove caches
+git clone https://github.com/Abdullah-Wex/epubsage.git
+cd epubsage
+uv venv && source .venv/bin/activate
+uv pip install -e ".[dev]"
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+### Commands
 
----
+```bash
+make test      # Run 60+ tests
+make format    # Format code
+make lint      # Check quality
+```
+
+### Running Tests
+
+```bash
+PYTHONPATH="$PWD" .venv/bin/python -m pytest tests/ -v
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CLI Reference](docs/CLI.md) | Complete CLI documentation |
+| [API Reference](docs/API.md) | Python API documentation |
+| [Examples](docs/EXAMPLES.md) | Real-world use cases |
 
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+<p align="center">
+  <strong>EpubSage</strong> — Extract. Analyze. Build.
+</p>

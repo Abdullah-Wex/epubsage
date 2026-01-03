@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "epubsage"
-version = "0.1.1"
+version = "0.2.0"
 description = "A professional EPUB structure and content extraction library with Dublin Core metadata support."
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -31,6 +31,7 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "pydantic>=2.0.0",
     "lxml>=5.0.0",
+    "typer[all]>=0.12.0",
 ]
 
 [project.scripts]

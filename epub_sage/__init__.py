@@ -238,8 +238,16 @@ class DublinCoreService:
         final_epub_dir = epub_dir or resolved_epub_dir
         try:
             opf_result = self.parser.parse_file(opf_path)
-            structure = self.structure_parser.parse_complete_structure(opf_result, final_epub_dir)
-            return [item.model_dump() for item in structure.spine_items] if hasattr(structure, 'spine_items') else []
+            # Return spine items from parsed OPF (idref list)
+            spine_data = []
+            for item in opf_result.spine_items:
+                if isinstance(item, str):
+                    spine_data.append({"idref": item, "linear": True})
+                elif isinstance(item, dict):
+                    spine_data.append(item)
+                else:
+                    spine_data.append({"idref": str(item), "linear": True})
+            return spine_data
         finally:
             self._cleanup_if_needed(temp_dir)
 
@@ -301,7 +309,7 @@ def parse_content_opf(file_path: str):
     service = DublinCoreService()
     return service.parse_content_opf(file_path)
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 # --- Public API Groupings ---
 
