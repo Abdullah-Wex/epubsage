@@ -235,7 +235,7 @@ class DublinCoreService:
     def extract_reading_order(self, file_path: str, epub_dir: Optional[str] = None):
         """Extract reading order from .epub or .opf file."""
         opf_path, resolved_epub_dir, temp_dir = self._resolve_input(file_path)
-        final_epub_dir = epub_dir or resolved_epub_dir
+        _ = epub_dir or resolved_epub_dir  # Reserved for future use
         try:
             opf_result = self.parser.parse_file(opf_path)
             # Return spine items from parsed OPF (idref list)

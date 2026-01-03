@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -12,7 +12,7 @@ class DateTimeEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-def save_to_json(data: Any, output_file: str, indent: int = 2):
+def save_to_json(data: Any, output_file: str, indent: Optional[int] = 2):
     """
     Saves data to a JSON file with proper encoding for dates and non-ASCII characters.
 

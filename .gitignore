@@ -52,6 +52,7 @@ htmlcov/
 release.md
 linkedin_post_arabic.txt
 linkedin_post_english.txt
+docs/predocs/
 
 # Temporary files
 *.ipynb

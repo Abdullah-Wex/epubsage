@@ -9,7 +9,7 @@ This module contains shared utilities for the CLI following DRY principles:
 
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, NoReturn, Optional
 import json
 from datetime import datetime
 
@@ -174,7 +174,7 @@ class OutputFormatter:
         console.print(f"[blue]ℹ[/blue] {message}")
 
 
-def handle_error(msg: str, code: ExitCode = ExitCode.ERROR) -> None:
+def handle_error(msg: str, code: ExitCode = ExitCode.ERROR) -> NoReturn:
     """Single error handler - DRY principle."""
     err_console.print(f"[red]Error:[/red] {msg}")
     raise SystemExit(code)
@@ -204,11 +204,12 @@ def format_reading_time(time_dict: Dict[str, int]) -> str:
 
 def format_file_size(size_bytes: int) -> str:
     """Format file size to human-readable string."""
+    size: float = float(size_bytes)
     for unit in ["B", "KB", "MB", "GB"]:
-        if size_bytes < 1024:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024
-    return f"{size_bytes:.1f} TB"
+        if size < 1024:
+            return f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} TB"
 
 
 def truncate_text(text: str, max_length: int = 100) -> str:

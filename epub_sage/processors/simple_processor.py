@@ -14,7 +14,6 @@ from ..extractors.content_extractor import extract_book_content
 from ..core.dublin_core_parser import DublinCoreParser
 from ..core.structure_parser import EpubStructureParser
 from ..models.dublin_core import DublinCoreMetadata
-from ..models.structure import EpubStructure
 
 
 def _is_generated_title(title: str) -> bool:

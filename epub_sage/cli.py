@@ -13,7 +13,6 @@ from enum import Enum
 
 from .cli_utils import (
     console,
-    err_console,
     OutputFormatter,
     ExitCode,
     handle_error,
@@ -234,7 +233,7 @@ def extract(
 
         # Build output data
         if metadata_only:
-            output_data = {
+            output_data: dict[str, object] = {
                 "metadata": result.full_metadata.model_dump() if result.full_metadata else {
                     "title": result.title,
                     "author": result.author,
@@ -553,10 +552,12 @@ def stats(
             console.print(f"[green]Reading Time:[/green]    {data['reading_time']}")
             console.print(f"[green]Avg Words/Ch:[/green]    {data['avg_words_per_chapter']:,}")
 
-            if data['longest_chapter']:
-                console.print(f"[green]Longest Chapter:[/green] {data['longest_chapter']['title']} ({data['longest_chapter']['words']:,} words)")
-            if data['shortest_chapter']:
-                console.print(f"[green]Shortest Chapter:[/green] {data['shortest_chapter']['title']} ({data['shortest_chapter']['words']:,} words)")
+            longest = chapter_stats[0] if chapter_stats else None
+            shortest = chapter_stats[-1] if chapter_stats else None
+            if longest:
+                console.print(f"[green]Longest Chapter:[/green] {longest['title']} ({longest['words']:,} words)")
+            if shortest:
+                console.print(f"[green]Shortest Chapter:[/green] {shortest['title']} ({shortest['words']:,} words)")
 
             console.print(f"[green]File Size:[/green]       {data['file_size_mb']:.2f} MB")
             console.print(f"[green]Total Files:[/green]     {data['total_files']}")
@@ -916,7 +917,7 @@ def cover(
         if extractor.extract_single_file(str(path), cover_file, str(output_path)):
             info_print(f"[green]Cover saved to:[/green] {output_path}")
         else:
-            handle_error(f"Failed to extract cover image")
+            handle_error("Failed to extract cover image")
 
     except Exception as e:
         handle_error(str(e))
@@ -1006,10 +1007,10 @@ def manifest(
 
 
 # Entry point
-def main() -> None:
+def cli_entry() -> None:
     """Main entry point for the CLI."""
     app()
 
 
 if __name__ == "__main__":
-    main()
+    cli_entry()

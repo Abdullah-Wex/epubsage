@@ -35,7 +35,7 @@ dependencies = [
 ]
 
 [project.scripts]
-epub-sage = "epub_sage.cli:main"
+epub-sage = "epub_sage.cli:cli_entry"
 
 [project.urls]
 Homepage = "https://github.com/Abdullah-Wex/epubsage"
