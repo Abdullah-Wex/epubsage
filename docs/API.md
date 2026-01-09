@@ -189,6 +189,7 @@ Each chapter in `result.chapters` contains:
 | `href` | `str` | Path to HTML file within EPUB |
 | `word_count` | `int` | Word count for this chapter |
 | `content` | `list[dict]` | List of content blocks |
+| `sections` | `list[dict]` | TOC-based sections with hierarchy |
 | `images` | `list[str]` | Image paths referenced in chapter |
 | `content_type` | `str` | Type: `chapter`, `front_matter`, `back_matter`, `part` |
 | `chapter_number` | `int \| None` | Extracted chapter number |
@@ -239,6 +240,41 @@ for block in chapter['content']:
     if block['images']:
         print(f"  Images: {block['images']}")
 ```
+
+---
+
+### Section Dictionary
+
+Each section in `chapter['sections']` contains TOC-based content with nested subsections matching the TOC tree structure:
+
+#### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `str` | Section anchor ID from TOC |
+| `title` | `str` | Section title from TOC |
+| `level` | `int` | Hierarchy depth (1 = top level, 2 = subsection, etc.) |
+| `content` | `list[dict]` | Content blocks for this section |
+| `images` | `list[str]` | Images in this section |
+| `word_count` | `int` | Word count for section |
+| `subsections` | `list[dict]` | Nested child sections (same structure, recursive) |
+
+#### Example
+
+```python
+def print_section(section, indent=0):
+    prefix = "  " * indent
+    print(f"{prefix}{section['title']} ({section['word_count']} words)")
+    for sub in section['subsections']:
+        print_section(sub, indent + 1)
+
+for chapter in result.chapters:
+    print(f"Chapter: {chapter['title']}")
+    for section in chapter['sections']:
+        print_section(section, indent=1)
+```
+
+**Note:** Sections are nested recursively via `subsections`, matching the TOC tree hierarchy exactly.
 
 ---
 
@@ -422,6 +458,7 @@ parser = EpubStructureParser()
 | Method | Description |
 |--------|-------------|
 | `parse_complete_structure(opf_result, epub_dir)` | Full structure analysis |
+| `extract_content_by_toc(epub_dir, structure)` | Extract content using TOC boundaries |
 
 #### Example
 
@@ -442,6 +479,85 @@ print(f"Back Matter: {len(structure.back_matter)}")
 print(f"Images: {len(structure.images)}")
 print(f"Parts: {len(structure.parts)}")
 ```
+
+#### TOC-Based Extraction
+
+Extract content using Table of Contents anchor boundaries for precise section splitting.
+
+```python
+# After parsing structure
+extracted = struct_parser.extract_content_by_toc(epub_dir, structure)
+
+# Returns: Dict[file_path, List[ExtractedSection]]
+for file_path, sections in extracted.items():
+    for section in sections:
+        print(f"{section.nav_point.label}: {section.text_length} chars")
+        print(f"  Blocks: {len(section.content_blocks)}")
+        print(f"  Images: {section.images}")
+```
+
+---
+
+### ExtractedSection
+
+Dataclass for content extracted from a single TOC section.
+
+```python
+from epub_sage.extractors import ExtractedSection
+```
+
+#### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `nav_point` | `NavigationPoint` | The TOC entry this section belongs to |
+| `content_blocks` | `list[dict]` | Content blocks between anchors |
+| `images` | `list[str]` | Image paths in this section |
+| `text_length` | `int` | Total character count |
+
+---
+
+### SectionBoundary
+
+Dataclass defining content boundaries for TOC sections.
+
+```python
+from epub_sage.extractors import SectionBoundary
+```
+
+#### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `start_anchor` | `str \| None` | Starting element ID |
+| `end_anchor` | `str \| None` | Ending element ID |
+| `nav_point` | `NavigationPoint` | Associated navigation point |
+
+---
+
+### NavigationPoint (Updated)
+
+Navigation entry from TOC with anchor parsing.
+
+#### New Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file_path` | `str \| None` | File path without anchor (e.g., `OEBPS/Text/ch01.xhtml`) |
+| `anchor` | `str \| None` | Anchor ID from href (e.g., `p12` from `#p12`) |
+
+---
+
+### TOC Extraction Functions
+
+```python
+from epub_sage.extractors import build_section_boundaries, extract_book_by_toc
+```
+
+| Function | Description |
+|----------|-------------|
+| `build_section_boundaries(nav_points)` | Group nav_points by file and compute boundaries |
+| `extract_book_by_toc(epub_dir, nav_points)` | Extract entire book using TOC structure |
 
 ---
 

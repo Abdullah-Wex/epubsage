@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "epubsage"
-version = "0.2.0"
+version = "0.3.0"
 description = "A professional EPUB structure and content extraction library with Dublin Core metadata support."
 readme = "README.md"
 license = {file = "LICENSE"}

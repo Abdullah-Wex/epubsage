@@ -84,6 +84,10 @@ class NavigationPoint(BaseModel):
     play_order: int
     level: int = 1
 
+    # Parsed href components for TOC-based extraction
+    file_path: Optional[str] = None  # e.g., "OEBPS/Text/chapter-1.xhtml"
+    anchor: Optional[str] = None  # e.g., "p12" from "#p12"
+
     # Hierarchy
     parent_id: Optional[str] = None
     children: List["NavigationPoint"] = Field(default_factory=list)

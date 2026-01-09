@@ -18,6 +18,8 @@ from .statistics import (
     get_text_statistics
 )
 
+from .calibre_detector import is_calibre_generated
+
 __all__ = [
     'EpubNamespaces',
     'get_namespaces_from_root',
@@ -29,5 +31,6 @@ __all__ = [
     'get_element_text_and_attributes',
     'EpubStatistics',
     'calculate_reading_time',
-    'get_text_statistics'
+    'get_text_statistics',
+    'is_calibre_generated'
 ]

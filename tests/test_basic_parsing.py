@@ -116,10 +116,12 @@ class TestTocParser:
         """Test TOC parser initialization."""
         assert toc_parser is not None
         assert hasattr(toc_parser, 'parse_toc_file')
-        assert toc_parser.ncx_namespace == "http://www.daisy.org/z3986/2005/ncx/"
+        assert hasattr(toc_parser, 'flatten_navigation_tree')
 
     def test_nav_entry_classification(self, toc_parser):
-        """Test navigation entry classification."""
+        """Test navigation entry classification via classifier."""
+        from epub_sage.core.ncx_parser import _classify_nav_entry
+
         test_cases = [
             ("Chapter 1: Introduction", "ch01.html", ("chapter", 1, None)),
             ("Appendix A", "appendix-a.html", ("back_matter", None, None)),
@@ -128,7 +130,7 @@ class TestTocParser:
         ]
 
         for label, href, expected in test_cases:
-            result = toc_parser._classify_nav_entry(label, href)
+            result = _classify_nav_entry(label, href, toc_parser.classifier)
             assert result == expected, f"Failed for {label}: got {result}, expected {expected}"
 
 

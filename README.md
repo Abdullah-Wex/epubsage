@@ -27,6 +27,7 @@ That's it. One function call to extract everything.
 |---------|-------------|
 | **Publisher-Agnostic** | Works with O'Reilly, Packt, Manning, and more |
 | **Complete Extraction** | Chapters, metadata, images, word counts, reading time |
+| **TOC-Based Extraction** | Precise section splitting using TOC anchor boundaries |
 | **Smart Image Handling** | Discovers and validates all referenced images |
 | **Content Classification** | Identifies front matter, chapters, back matter, parts |
 | **Dublin Core Metadata** | Full standards-compliant metadata extraction |
@@ -227,6 +228,7 @@ for block in chapter['content']:
 | `word_count` | `int` | Words in chapter |
 | `images` | `list[str]` | Image paths |
 | `content` | `list[dict]` | Content blocks |
+| `sections` | `list[dict]` | TOC-based sections with nested `subsections` |
 | `content_type` | `str` | `chapter`, `front_matter`, `back_matter`, `part` |
 
 **[View complete data models →](docs/API.md#data-models)**

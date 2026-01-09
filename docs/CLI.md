@@ -71,6 +71,7 @@ epub-sage info book.epub
 - **Words** - Total word count
 - **Est. Time** - Estimated reading time
 - **Chapters** - Number of chapters
+- **Sections** - Total sections across all chapters (including nested subsections)
 
 ---
 
@@ -97,6 +98,7 @@ epub-sage stats book.epub
 - Word count breakdown
 - Reading time estimates
 - Chapter statistics
+- Section counts (total across all chapters)
 - Image counts
 
 ---
@@ -131,6 +133,7 @@ epub-sage chapters book.epub
 - **Title** - Chapter title
 - **Words** - Word count
 - **Images** - Number of images
+- **Sections** - Number of TOC sections
 - **Type** - Content type (chapter, front_matter, etc.)
 
 ---
@@ -402,6 +405,7 @@ epub-sage extract book.epub -o output.json
 JSON file containing:
 - Complete metadata
 - All chapters with content
+- Nested sections with subsections matching TOC hierarchy
 - Image references
 - Word counts and statistics
 
